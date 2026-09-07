@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>VELAN | Voice Farm Companion</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <header>
+            <div class="logo">🌾</div>
+            <h1>VELAN</h1>
+            <p>Voice-Enabled Land & Agricultural Navigator</p>
+        </header>
+
+        <main>
+
+            <section class="status-card">
+
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span id="statusText">Ready</span>
+                </div>
+
+                <p id="statusMessage">
+                    Tap the microphone and ask VELAN anything about your farm.
+                </p>
+
+            </section>
+
+
+            <section class="voice-section">
+
+                <button id="micButton" class="mic-button">
+                    🎤
+                </button>
+
+                <p class="mic-label">Tap to speak</p>
+
+            </section>
+
+
+            <section class="conversation-section">
+
+                <div class="conversation-card farmer">
+
+                    <span class="speaker">👨‍🌾 Farmer</span>
+
+                    <p id="farmerQuestion">
+                        Your question will appear here...
+                    </p>
+
+                </div>
+
+
+                <div class="conversation-card velan">
+
+                    <span class="speaker">🌾 VELAN</span>
+
+                    <p id="velanResponse">
+                        VELAN's voice response will appear here...
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <section class="farm-section">
+
+                <h2>Current Farm Conditions</h2>
+
+                <div class="farm-grid">
+
+                    <div class="farm-card">
+                        <span class="farm-icon">🌡️</span>
+                        <p>Temperature</p>
+                        <h3 id="temperature">--</h3>
+                    </div>
+
+
+                    <div class="farm-card">
+                        <span class="farm-icon">💧</span>
+                        <p>Soil Moisture</p>
+                        <h3 id="soilMoisture">--</h3>
+                    </div>
+
+
+                    <div class="farm-card">
+                        <span class="farm-icon">🚜</span>
+                        <p>Motor Status</p>
+                        <h3 id="motorStatus">--</h3>
+                    </div>
+
+
+                    <div class="farm-card">
+                        <span class="farm-icon">☀️</span>
+                        <p>Weather</p>
+                        <h3 id="weather">--</h3>
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+
+        <footer>
+            <p>🌾 Simple decisions. Smarter farming.</p>
+        </footer>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>

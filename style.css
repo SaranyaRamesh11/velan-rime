@@ -1,0 +1,167 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #f4f7f2;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.app-container {
+    max-width: 900px;
+    margin: auto;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    font-size: 50px;
+}
+
+header h1 {
+    font-size: 42px;
+    margin-top: 5px;
+}
+
+header p {
+    margin-top: 8px;
+    color: #666;
+}
+
+.status-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.status-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    background: #888;
+    border-radius: 50%;
+}
+
+#statusMessage {
+    margin-top: 10px;
+    color: #666;
+}
+
+.voice-section {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.mic-button {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: none;
+    font-size: 45px;
+    cursor: pointer;
+    background: white;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.mic-button:hover {
+    transform: scale(1.05);
+}
+
+.mic-label {
+    margin-top: 15px;
+    color: #666;
+}
+
+.conversation-section {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.conversation-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+}
+
+.speaker {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.farmer {
+    border-left: 5px solid #d4a017;
+}
+
+.velan {
+    border-left: 5px solid #2e7d32;
+}
+
+.farm-section h2 {
+    margin-bottom: 15px;
+}
+
+.farm-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.farm-card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+}
+
+.farm-icon {
+    font-size: 30px;
+}
+
+.farm-card p {
+    margin-top: 10px;
+    color: #666;
+}
+
+.farm-card h3 {
+    margin-top: 5px;
+}
+
+footer {
+    text-align: center;
+    margin-top: 35px;
+    color: #666;
+}
+
+@media (max-width: 600px) {
+
+    body {
+        padding: 12px;
+    }
+
+    header h1 {
+        font-size: 34px;
+    }
+
+    .farm-grid {
+        grid-template-columns: 1fr;
+    }
+
+}

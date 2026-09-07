@@ -1,0 +1,9 @@
+{
+  "temperature": "38°C",
+  "soilMoisture": "Low",
+  "motorStatus": "OFF",
+  "weather": "Sunny",
+  "crop": "Paddy",
+  "location": "Tamil Nadu",
+  "recommendation": "Soil moisture is currently low. Irrigation is recommended based on the current farm conditions."
+}
