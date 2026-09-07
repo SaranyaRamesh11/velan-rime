@@ -1,9 +1,25 @@
 {
-  "temperature": "38°C",
-  "soilMoisture": "Low",
-  "motorStatus": "OFF",
-  "weather": "Sunny",
-  "crop": "Paddy",
-  "location": "Tamil Nadu",
-  "recommendation": "Soil moisture is currently low. Irrigation is recommended based on the current farm conditions."
+  "scenarios": {
+    "irrigation": {
+      "temperature": "38°C",
+      "soilMoisture": "Low",
+      "motorStatus": "OFF",
+      "weather": "Sunny",
+      "recommendation": "Soil moisture is low. Irrigation is recommended."
+    },
+    "rain": {
+      "temperature": "29°C",
+      "soilMoisture": "Medium",
+      "motorStatus": "OFF",
+      "weather": "Rain Expected",
+      "recommendation": "Rain is expected. Avoid unnecessary irrigation today."
+    },
+    "fertilizer": {
+      "temperature": "31°C",
+      "soilMoisture": "High",
+      "motorStatus": "OFF",
+      "weather": "Cloudy",
+      "recommendation": "Soil moisture is sufficient. Avoid applying fertilizer immediately."
+    }
+  }
 }
