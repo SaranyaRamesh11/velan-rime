@@ -165,3 +165,70 @@ footer {
     }
 
 }
+/* -----------------------------
+   VELAN STATUS STATES
+----------------------------- */
+
+.status-dot.ready {
+    background: #777;
+}
+
+.status-dot.listening {
+    background: #2e7d32;
+    animation: pulse 1s infinite;
+}
+
+.status-dot.processing {
+    background: #f9a825;
+    animation: pulse 0.8s infinite;
+}
+
+.status-dot.speaking {
+    background: #1565c0;
+    animation: pulse 0.6s infinite;
+}
+
+.status-dot.interrupted {
+    background: #c62828;
+}
+
+.status-dot.error {
+    background: #8e0000;
+}
+
+@keyframes pulse {
+
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.4);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+.mic-button.active {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 12px rgba(46, 125, 50, 0.15);
+    animation: micPulse 1s infinite;
+}
+
+@keyframes micPulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
