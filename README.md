@@ -1,1 +1,1 @@
-a
+agit status
