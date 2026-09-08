@@ -1,8 +1,6 @@
 // ============================================================
-// VELAN - Voice-First Farming Companion
-// Complete Frontend
-// Speech Recognition + Farm Decision Logic + Rime TTS
-// Interruption + Recovery
+// VELAN
+// Voice-First Farming Companion
 // ============================================================
 
 let farmData = null;
@@ -11,9 +9,8 @@ let recognition = null;
 let isListening = false;
 let currentAudio = null;
 
-// Every request gets a unique version.
-// If a newer request starts, an older response becomes invalid.
 let requestVersion = 0;
+let selectedScenario = "dry";
 
 
 // ============================================================
@@ -21,9 +18,15 @@ let requestVersion = 0;
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
+
     loadFarmData();
+
     setupSpeechRecognition();
+
     setupMicButton();
+
+    setupScenarioSelector();
+
 });
 
 
@@ -32,56 +35,144 @@ document.addEventListener("DOMContentLoaded", () => {
 // ============================================================
 
 async function loadFarmData() {
+
     try {
-        const response = await fetch("farmData.json");
+
+        const response =
+            await fetch("farmData.json");
 
         if (!response.ok) {
             throw new Error("Could not load farmData.json");
         }
 
-        farmData = await response.json();
+        farmData =
+            await response.json();
 
-        // Default display
-        updateFarmDisplay(farmData.scenarios.irrigation);
+        applyScenario(selectedScenario);
 
         updateVelanStatus("Ready");
 
     } catch (error) {
-        console.error("Farm data loading error:", error);
+
+        console.error(
+            "Farm data error:",
+            error
+        );
 
         updateVelanStatus("Error");
-
-        const message = document.getElementById("statusMessage");
-
-        if (message) {
-            message.textContent =
-                "Unable to load farm data.";
-        }
     }
 }
 
 
 // ============================================================
-// UPDATE FARM CARDS
+// SCENARIO SELECTOR
 // ============================================================
 
-function updateFarmDisplay(data) {
+function setupScenarioSelector() {
 
-    if (!data) {
+    const selector =
+        document.getElementById(
+            "scenarioSelect"
+        );
+
+    if (!selector) {
         return;
     }
 
-    document.getElementById("temperature").textContent =
-        data.temperature;
+    selector.addEventListener(
+        "change",
+        () => {
 
-    document.getElementById("soilMoisture").textContent =
-        data.soilMoisture;
+            selectedScenario =
+                selector.value;
 
-    document.getElementById("motorStatus").textContent =
-        data.motorStatus;
+            applyScenario(
+                selectedScenario
+            );
 
-    document.getElementById("weather").textContent =
-        data.weather;
+            updateVelanResponse(
+                farmData.scenarios[
+                    selectedScenario
+                ].recommendation
+            );
+
+        }
+    );
+}
+
+
+// ============================================================
+// APPLY SCENARIO
+// ============================================================
+
+function applyScenario(scenarioKey) {
+
+    if (!farmData) {
+        return;
+    }
+
+    const scenario =
+        farmData.scenarios[
+            scenarioKey
+        ];
+
+    if (!scenario) {
+        return;
+    }
+
+
+    document.getElementById(
+        "scenarioName"
+    ).textContent =
+        scenario.name;
+
+
+    document.getElementById(
+        "scenarioDescription"
+    ).textContent =
+        scenario.description;
+
+
+    document.getElementById(
+        "temperature"
+    ).textContent =
+        scenario.temperature;
+
+
+    document.getElementById(
+        "soilMoisture"
+    ).textContent =
+        scenario.soilMoisture;
+
+
+    document.getElementById(
+        "rainChance"
+    ).textContent =
+        scenario.rainChance;
+
+
+    document.getElementById(
+        "motorStatus"
+    ).textContent =
+        scenario.motorStatus;
+
+
+    document.getElementById(
+        "weather"
+    ).textContent =
+        scenario.weather;
+
+
+    document.getElementById(
+        "crop"
+    ).textContent =
+        scenario.crop;
+
+
+    document.getElementById(
+        "recommendationText"
+    ).textContent =
+        scenario.recommendation;
 }
 
 
@@ -95,228 +186,247 @@ function setupSpeechRecognition() {
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
 
+
     if (!SpeechRecognition) {
 
         console.error(
-            "Speech recognition is not supported."
+            "Speech Recognition is not supported."
         );
 
         updateVelanStatus("Error");
-
-        document.getElementById("statusMessage").textContent =
-            "Speech recognition is not supported in this browser.";
 
         return;
     }
 
 
-    recognition = new SpeechRecognition();
-
-    // Tamil speech recognition
-    recognition.lang = "ta-IN";
-
-    // Listen for one user turn at a time
-    recognition.continuous = false;
-
-    // Final result only
-    recognition.interimResults = false;
+    recognition =
+        new SpeechRecognition();
 
 
-    // --------------------------------------------------------
+    // Tamil voice input.
+    recognition.lang =
+        "ta-IN";
+
+
+    recognition.continuous =
+        false;
+
+
+    recognition.interimResults =
+        false;
+
+
+    // ----------------------------------------
     // START
-    // --------------------------------------------------------
+    // ----------------------------------------
 
     recognition.onstart = () => {
 
         isListening = true;
 
-        updateVelanStatus("Listening");
-
-        const micButton =
-            document.getElementById("micButton");
-
-        if (micButton) {
-            micButton.classList.add("active");
-        }
-    };
-
-
-    // --------------------------------------------------------
-    // RESULT
-    // --------------------------------------------------------
-
-    recognition.onresult = async (event) => {
-
-        const transcript =
-            event.results[0][0].transcript.trim();
-
-        console.log("Farmer said:", transcript);
-
-
-        if (!transcript) {
-
-            updateVelanStatus("Ready");
-
-            return;
-        }
-
-
-        updateFarmerQuestion(transcript);
-
-        isListening = false;
-
-
-        const micButton =
-            document.getElementById("micButton");
-
-        if (micButton) {
-            micButton.classList.remove("active");
-        }
-
-
-        await processFarmerRequest(transcript);
-    };
-
-
-    // --------------------------------------------------------
-    // ERROR
-    // --------------------------------------------------------
-
-    recognition.onerror = (event) => {
-
-        console.error(
-            "Speech recognition error:",
-            event.error
+        updateVelanStatus(
+            "Listening"
         );
 
-        isListening = false;
-
-        const micButton =
-            document.getElementById("micButton");
-
-        if (micButton) {
-            micButton.classList.remove("active");
-        }
-
-
-        // User simply didn't speak
-        if (event.error === "no-speech") {
-
-            updateVelanStatus("Ready");
-
-            return;
-        }
-
-
-        updateVelanStatus("Error");
+        document
+            .getElementById("micButton")
+            .classList.add("active");
     };
 
 
-    // --------------------------------------------------------
+    // ----------------------------------------
+    // RESULT
+    // ----------------------------------------
+
+    recognition.onresult =
+        async (event) => {
+
+            const transcript =
+                event.results[0][0]
+                    .transcript
+                    .trim();
+
+
+            console.log(
+                "Farmer:",
+                transcript
+            );
+
+
+            if (!transcript) {
+
+                updateVelanStatus(
+                    "Ready"
+                );
+
+                return;
+            }
+
+
+            updateFarmerQuestion(
+                transcript
+            );
+
+
+            isListening = false;
+
+
+            document
+                .getElementById("micButton")
+                .classList.remove("active");
+
+
+            await processFarmerRequest(
+                transcript
+            );
+        };
+
+
+    // ----------------------------------------
+    // ERROR
+    // ----------------------------------------
+
+    recognition.onerror =
+        (event) => {
+
+            console.error(
+                "Speech recognition error:",
+                event.error
+            );
+
+
+            isListening = false;
+
+
+            document
+                .getElementById("micButton")
+                .classList.remove("active");
+
+
+            if (
+                event.error === "no-speech"
+            ) {
+
+                updateVelanStatus(
+                    "Ready"
+                );
+
+                return;
+            }
+
+
+            updateVelanStatus(
+                "Error"
+            );
+        };
+
+
+    // ----------------------------------------
     // END
-    // --------------------------------------------------------
+    // ----------------------------------------
 
-    recognition.onend = () => {
+    recognition.onend =
+        () => {
 
-        isListening = false;
+            isListening = false;
 
-        const micButton =
-            document.getElementById("micButton");
-
-        if (micButton) {
-            micButton.classList.remove("active");
-        }
-    };
+            document
+                .getElementById("micButton")
+                .classList.remove("active");
+        };
 }
 
 
 // ============================================================
-// MICROPHONE BUTTON
+// MICROPHONE
 // ============================================================
 
 function setupMicButton() {
 
     const micButton =
-        document.getElementById("micButton");
+        document.getElementById(
+            "micButton"
+        );
 
 
     if (!micButton) {
-
-        console.error(
-            "Microphone button not found."
-        );
-
         return;
     }
 
 
-    micButton.addEventListener("click", () => {
+    micButton.addEventListener(
+        "click",
+        () => {
 
-        // ----------------------------------------------------
-        // If VELAN is speaking, clicking the mic acts as
-        // an interruption.
-        // ----------------------------------------------------
+            // If Rime is currently speaking,
+            // treat this click as an interruption.
+            if (currentAudio) {
 
-        if (currentAudio) {
+                interruptCurrentResponse();
+            }
 
-            interruptCurrentResponse();
+
+            if (!recognition) {
+
+                updateVelanStatus(
+                    "Error"
+                );
+
+                return;
+            }
+
+
+            if (isListening) {
+                return;
+            }
+
+
+            try {
+
+                recognition.start();
+
+            } catch (error) {
+
+                console.log(
+                    "Recognition start:",
+                    error.message
+                );
+            }
         }
-
-
-        if (!recognition) {
-
-            updateVelanStatus("Error");
-
-            return;
-        }
-
-
-        if (isListening) {
-            return;
-        }
-
-
-        try {
-
-            recognition.start();
-
-        } catch (error) {
-
-            console.log(
-                "Could not start recognition:",
-                error.message
-            );
-        }
-    });
+    );
 }
 
 
 // ============================================================
-// PROCESS FARMER QUESTION
+// PROCESS FARMER REQUEST
 // ============================================================
 
-async function processFarmerRequest(question) {
+async function processFarmerRequest(
+    question
+) {
 
-    updateVelanStatus("Processing");
+    updateVelanStatus(
+        "Processing"
+    );
 
 
-    // Create new request version
     requestVersion++;
 
     const myRequestVersion =
         requestVersion;
 
 
-    // Generate context-aware answer
     const responseText =
-        generateVelanResponse(question);
+        generateVelanResponse(
+            question
+        );
 
 
-    // Show answer in UI
-    updateVelanResponse(responseText);
+    updateVelanResponse(
+        responseText
+    );
 
 
-    // Send to Rime
     await speakWithRime(
         responseText,
         myRequestVersion
@@ -325,10 +435,12 @@ async function processFarmerRequest(question) {
 
 
 // ============================================================
-// NORMALIZE USER INPUT
+// NORMALIZE
 // ============================================================
 
-function normalizeQuestion(question) {
+function normalizeQuestion(
+    question
+) {
 
     return question
         .toLowerCase()
@@ -338,52 +450,36 @@ function normalizeQuestion(question) {
 
 
 // ============================================================
-// FARMING DECISION LOGIC
+// FARMING DECISION ENGINE
 // ============================================================
 
-function generateVelanResponse(question) {
+function generateVelanResponse(
+    question
+) {
 
     if (!farmData) {
 
         return (
-            "Farm data is not available right now. " +
+            "Farm data is currently unavailable. " +
             "Please try again."
         );
     }
 
 
     const text =
-        normalizeQuestion(question);
-
-
-    // ========================================================
-    // 1. SOIL MOISTURE
-    // ========================================================
-
-    if (
-        text.includes("soil moisture") ||
-        text.includes("soil") ||
-        text.includes("mannu eeram") ||
-        text.includes("mannu eera") ||
-        text.includes("eeram") ||
-        text.includes("மண்") ||
-        text.includes("ஈரம்")
-    ) {
-
-        const data =
-            farmData.scenarios.irrigation;
-
-        updateFarmDisplay(data);
-
-        return (
-            "The soil moisture is currently low. " +
-            "The field needs water, so irrigation is recommended."
+        normalizeQuestion(
+            question
         );
-    }
+
+
+    const scenario =
+        farmData.scenarios[
+            selectedScenario
+        ];
 
 
     // ========================================================
-    // 2. IRRIGATION / WATER
+    // IRRIGATION
     // ========================================================
 
     if (
@@ -392,177 +488,103 @@ function generateVelanResponse(question) {
         text.includes("தண்ணீர்") ||
         text.includes("water") ||
         text.includes("irrigation") ||
-        text.includes("irigate") ||
-        text.includes("paachanuma") ||
         text.includes("paachan") ||
-        text.includes("thanni vidalama")
+        text.includes("paachanuma")
     ) {
 
-        const data =
-            farmData.scenarios.irrigation;
-
-        updateFarmDisplay(data);
-
-        return (
-            "The temperature is 38 degrees and the soil moisture " +
-            "is low. Based on the current farm conditions, " +
-            "irrigation is recommended today."
+        return irrigationAdvice(
+            scenario
         );
     }
 
 
     // ========================================================
-    // 3. MOTOR
-    // ========================================================
-
-    if (
-        text.includes("motor") ||
-        text.includes("pump") ||
-        text.includes("motor on") ||
-        text.includes("pump on")
-    ) {
-
-        const data =
-            farmData.scenarios.irrigation;
-
-        updateFarmDisplay(data);
-
-        return (
-            "The soil moisture is low and the motor is currently off. " +
-            "You can turn on the irrigation motor."
-        );
-    }
-
-
-    // ========================================================
-    // 4. RAIN
+    // RAIN
     // ========================================================
 
     if (
         text.includes("mazhai") ||
         text.includes("மழை") ||
-        text.includes("rain") ||
-        text.includes("rain varuma") ||
-        text.includes("mazhai varuma")
+        text.includes("rain")
     ) {
 
-        const data =
-            farmData.scenarios.rain;
-
-        updateFarmDisplay(data);
-
-        return (
-            "Rain is expected today. " +
-            "Avoid unnecessary irrigation and check the field again later."
+        return rainAdvice(
+            scenario
         );
     }
 
 
     // ========================================================
-    // 5. RAIN + WATER DECISION
+    // SOIL
     // ========================================================
 
     if (
-        (
-            text.includes("mazhai") ||
-            text.includes("rain")
-        ) &&
-        (
-            text.includes("thanni") ||
-            text.includes("water") ||
-            text.includes("irrigation")
-        )
+        text.includes("soil") ||
+        text.includes("mannu") ||
+        text.includes("மண்") ||
+        text.includes("eeram") ||
+        text.includes("ஈரம்")
     ) {
 
-        const data =
-            farmData.scenarios.rain;
-
-        updateFarmDisplay(data);
-
-        return (
-            "Rain is expected, so avoid giving unnecessary water " +
-            "to the field today."
+        return soilAdvice(
+            scenario
         );
     }
 
 
     // ========================================================
-    // 6. FERTILIZER
+    // MOTOR / PUMP
+    // ========================================================
+
+    if (
+        text.includes("motor") ||
+        text.includes("pump") ||
+        text.includes("மோட்டார்")
+    ) {
+
+        return motorAdvice(
+            scenario
+        );
+    }
+
+
+    // ========================================================
+    // FERTILIZER
     // ========================================================
 
     if (
         text.includes("fertilizer") ||
         text.includes("fertiliser") ||
         text.includes("uram") ||
-        text.includes("உரம்") ||
-        text.includes("fertilizer podalama") ||
-        text.includes("uram podalama")
+        text.includes("உரம்")
     ) {
 
-        const data =
-            farmData.scenarios.fertilizer;
-
-        updateFarmDisplay(data);
-
-        return (
-            "The soil moisture is currently sufficient. " +
-            "Avoid applying fertilizer immediately and check the field condition again."
+        return fertilizerAdvice(
+            scenario
         );
     }
 
 
     // ========================================================
-    // 7. FARM STATUS
+    // TODAY / GENERAL
     // ========================================================
 
     if (
-        text.includes("farm status") ||
-        text.includes("field status") ||
-        text.includes("nilam epdi") ||
-        text.includes("vayal epdi") ||
-        text.includes("field epdi")
-    ) {
-
-        const data =
-            farmData.scenarios.irrigation;
-
-        updateFarmDisplay(data);
-
-        return (
-            "Your field temperature is 38 degrees. " +
-            "Soil moisture is low, the motor is off, and the weather is sunny. " +
-            "Irrigation is recommended."
-        );
-    }
-
-
-    // ========================================================
-    // 8. WHAT SHOULD I DO TODAY?
-    // ========================================================
-
-    if (
-        text.includes("innaikku enna") ||
-        text.includes("enna pannanum") ||
-        text.includes("what should i do") ||
+        text.includes("innaikku") ||
+        text.includes("inniku") ||
         text.includes("today") ||
-        text.includes("inniku")
+        text.includes("enna pannanum") ||
+        text.includes("enna seiyanum")
     ) {
 
-        const data =
-            farmData.scenarios.irrigation;
-
-        updateFarmDisplay(data);
-
-        return (
-            "Today, check the soil moisture first. " +
-            "It is currently low, so irrigation is recommended. " +
-            "Also monitor the weather before watering."
+        return overallAdvice(
+            scenario
         );
     }
 
 
     // ========================================================
-    // 9. HELP
+    // HELP
     // ========================================================
 
     if (
@@ -572,26 +594,198 @@ function generateVelanResponse(question) {
     ) {
 
         return (
-            "I can help you with irrigation, rain, soil moisture, " +
-            "motor status, fertilizer, and daily farm decisions."
+            "I can help you with irrigation, rain, " +
+            "soil moisture, motor status, fertilizer, " +
+            "and today's farm decisions."
         );
     }
 
 
     // ========================================================
-    // DEFAULT
+    // UNRELATED / DEFAULT
     // ========================================================
 
     return (
-        "I can help with irrigation, rain, soil moisture, " +
-        "motor status, fertilizer, and farm decisions. " +
-        "Please ask a farming-related question."
+        "I am designed for farming questions. " +
+        "Ask me about water, rain, soil, fertilizer, " +
+        "or your field."
     );
 }
 
 
 // ============================================================
-// RIME TEXT-TO-SPEECH
+// IRRIGATION ADVICE
+// ============================================================
+
+function irrigationAdvice(
+    scenario
+) {
+
+    if (
+        scenario.soilMoisture === "Low" &&
+        scenario.rainChance === "10%"
+    ) {
+
+        return (
+            "The soil moisture is low and rain is unlikely. " +
+            "Irrigation is recommended today."
+        );
+    }
+
+
+    if (
+        scenario.rainChance === "80%"
+    ) {
+
+        return (
+            "Rain is expected soon, so avoid unnecessary irrigation. " +
+            "Check the field again after the rain."
+        );
+    }
+
+
+    return (
+        "The soil moisture is already high. " +
+        "Irrigation is not needed right now."
+    );
+}
+
+
+// ============================================================
+// RAIN ADVICE
+// ============================================================
+
+function rainAdvice(
+    scenario
+) {
+
+    if (
+        scenario.rainChance === "80%"
+    ) {
+
+        return (
+            "Rain is expected with an eighty percent chance. " +
+            "Avoid unnecessary irrigation today."
+        );
+    }
+
+
+    if (
+        scenario.rainChance === "40%"
+    ) {
+
+        return (
+            "There is a moderate chance of rain. " +
+            "Monitor the field before deciding on irrigation."
+        );
+    }
+
+
+    return (
+        "Rain is unlikely at the moment. " +
+        "Monitor the soil moisture and irrigate only if needed."
+    );
+}
+
+
+// ============================================================
+// SOIL ADVICE
+// ============================================================
+
+function soilAdvice(
+    scenario
+) {
+
+    return (
+        `Current soil moisture is ${scenario.soilMoisture}. ` +
+        `The temperature is ${scenario.temperature}.`
+    );
+}
+
+
+// ============================================================
+// MOTOR ADVICE
+// ============================================================
+
+function motorAdvice(
+    scenario
+) {
+
+    if (
+        scenario.soilMoisture === "Low" &&
+        scenario.rainChance === "10%"
+    ) {
+
+        return (
+            "The soil is dry and rain is unlikely. " +
+            "The irrigation motor can be turned on."
+        );
+    }
+
+
+    if (
+        scenario.rainChance === "80%"
+    ) {
+
+        return (
+            "Rain is expected soon. " +
+            "Keep the irrigation motor off for now."
+        );
+    }
+
+
+    return (
+        "The soil has enough moisture. " +
+        "Keep the irrigation motor off for now."
+    );
+}
+
+
+// ============================================================
+// FERTILIZER ADVICE
+// ============================================================
+
+function fertilizerAdvice(
+    scenario
+) {
+
+    if (
+        scenario.soilMoisture === "High"
+    ) {
+
+        return (
+            "The soil already has sufficient moisture. " +
+            "Avoid applying fertilizer immediately and monitor the field."
+        );
+    }
+
+
+    return (
+        "Before applying fertilizer, check soil and crop conditions. " +
+        "Do not apply more fertilizer than required."
+    );
+}
+
+
+// ============================================================
+// OVERALL ADVICE
+// ============================================================
+
+function overallAdvice(
+    scenario
+) {
+
+    return (
+        `Today the temperature is ${scenario.temperature}, ` +
+        `soil moisture is ${scenario.soilMoisture}, ` +
+        `and rain chance is ${scenario.rainChance}. ` +
+        `${scenario.recommendation}`
+    );
+}
+
+
+// ============================================================
+// RIME TTS
 // ============================================================
 
 async function speakWithRime(
@@ -601,43 +795,38 @@ async function speakWithRime(
 
     try {
 
-        updateVelanStatus("Speaking");
+        updateVelanStatus(
+            "Speaking"
+        );
 
-
-        // ----------------------------------------------------
-        // Ask backend for Rime audio
-        // ----------------------------------------------------
 
         const response =
-            await fetch("/api/tts", {
+            await fetch(
+                "/api/tts",
+                {
+                    method: "POST",
 
-                method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-                    text: text
-                })
-            });
+                    body: JSON.stringify({
+                        text: text
+                    })
+                }
+            );
 
 
-        // ----------------------------------------------------
-        // A newer request already exists
-        // ----------------------------------------------------
-
+        // Ignore stale request
         if (
-            myRequestVersion !== requestVersion
+            myRequestVersion !==
+            requestVersion
         ) {
 
             return;
         }
 
-
-        // ----------------------------------------------------
-        // Rime returned an error
-        // ----------------------------------------------------
 
         if (!response.ok) {
 
@@ -649,26 +838,22 @@ async function speakWithRime(
                 errorText
             );
 
-            updateVelanStatus("Error");
+            updateVelanStatus(
+                "Error"
+            );
 
             return;
         }
 
 
-        // ----------------------------------------------------
-        // Convert Rime response into audio
-        // ----------------------------------------------------
-
         const audioBlob =
             await response.blob();
 
 
-        // ----------------------------------------------------
-        // Check one more time before playback
-        // ----------------------------------------------------
-
+        // Check again before playback
         if (
-            myRequestVersion !== requestVersion
+            myRequestVersion !==
+            requestVersion
         ) {
 
             return;
@@ -676,7 +861,9 @@ async function speakWithRime(
 
 
         const audioUrl =
-            URL.createObjectURL(audioBlob);
+            URL.createObjectURL(
+                audioBlob
+            );
 
 
         const audio =
@@ -687,49 +874,49 @@ async function speakWithRime(
             audio;
 
 
-        // ----------------------------------------------------
-        // AUDIO FINISHED
-        // ----------------------------------------------------
-
         audio.onended = () => {
 
-            URL.revokeObjectURL(audioUrl);
+            URL.revokeObjectURL(
+                audioUrl
+            );
 
 
             if (
-                currentAudio === audio
+                currentAudio ===
+                audio
             ) {
 
-                currentAudio = null;
+                currentAudio =
+                    null;
 
-                updateVelanStatus("Ready");
+                updateVelanStatus(
+                    "Ready"
+                );
             }
         };
 
-
-        // ----------------------------------------------------
-        // AUDIO ERROR
-        // ----------------------------------------------------
 
         audio.onerror = () => {
 
-            URL.revokeObjectURL(audioUrl);
+            URL.revokeObjectURL(
+                audioUrl
+            );
 
 
             if (
-                currentAudio === audio
+                currentAudio ===
+                audio
             ) {
 
-                currentAudio = null;
+                currentAudio =
+                    null;
 
-                updateVelanStatus("Error");
+                updateVelanStatus(
+                    "Error"
+                );
             }
         };
 
-
-        // ----------------------------------------------------
-        // PLAY
-        // ----------------------------------------------------
 
         await audio.play();
 
@@ -740,10 +927,12 @@ async function speakWithRime(
             error
         );
 
+        currentAudio =
+            null;
 
-        currentAudio = null;
-
-        updateVelanStatus("Error");
+        updateVelanStatus(
+            "Error"
+        );
     }
 }
 
@@ -759,11 +948,11 @@ function interruptCurrentResponse() {
     );
 
 
-    // Invalidate current request
+    // Invalidate previous request.
     requestVersion++;
 
 
-    // Stop currently playing audio
+    // Stop active audio.
     if (currentAudio) {
 
         try {
@@ -775,34 +964,45 @@ function interruptCurrentResponse() {
         } catch (error) {
 
             console.error(
-                "Error stopping audio:",
+                "Audio stop error:",
                 error
             );
         }
 
 
-        currentAudio = null;
+        currentAudio =
+            null;
     }
 
 
-    updateVelanStatus("Interrupted");
+    updateVelanStatus(
+        "Interrupted"
+    );
 }
 
 
 // ============================================================
-// STATUS UPDATE
+// STATUS UI
 // ============================================================
 
-function updateVelanStatus(status) {
+function updateVelanStatus(
+    status
+) {
 
     const statusText =
-        document.getElementById("statusText");
+        document.getElementById(
+            "statusText"
+        );
 
     const statusMessage =
-        document.getElementById("statusMessage");
+        document.getElementById(
+            "statusMessage"
+        );
 
     const statusDot =
-        document.querySelector(".status-dot");
+        document.getElementById(
+            "statusDot"
+        );
 
 
     if (
@@ -810,6 +1010,7 @@ function updateVelanStatus(status) {
         !statusMessage ||
         !statusDot
     ) {
+
         return;
     }
 
@@ -818,95 +1019,96 @@ function updateVelanStatus(status) {
         status;
 
 
-    // Clear old status classes
     statusDot.className =
         "status-dot";
 
 
-    // --------------------------------------------------------
-    // READY
-    // --------------------------------------------------------
-
-    if (status === "Ready") {
+    if (
+        status === "Ready"
+    ) {
 
         statusMessage.textContent =
             "Tap the microphone and ask VELAN about your farm.";
 
-        statusDot.classList.add("ready");
+        statusDot.classList.add(
+            "ready"
+        );
     }
 
 
-    // --------------------------------------------------------
-    // LISTENING
-    // --------------------------------------------------------
-
-    else if (status === "Listening") {
+    else if (
+        status === "Listening"
+    ) {
 
         statusMessage.textContent =
             "VELAN is listening to the farmer...";
 
-        statusDot.classList.add("listening");
+        statusDot.classList.add(
+            "listening"
+        );
     }
 
 
-    // --------------------------------------------------------
-    // PROCESSING
-    // --------------------------------------------------------
-
-    else if (status === "Processing") {
+    else if (
+        status === "Processing"
+    ) {
 
         statusMessage.textContent =
-            "VELAN is analysing your farm conditions...";
+            "VELAN is analysing the current farm context...";
 
-        statusDot.classList.add("processing");
+        statusDot.classList.add(
+            "processing"
+        );
     }
 
 
-    // --------------------------------------------------------
-    // SPEAKING
-    // --------------------------------------------------------
-
-    else if (status === "Speaking") {
+    else if (
+        status === "Speaking"
+    ) {
 
         statusMessage.textContent =
-            "VELAN is speaking...";
+            "VELAN is speaking through Rime...";
 
-        statusDot.classList.add("speaking");
+        statusDot.classList.add(
+            "speaking"
+        );
     }
 
 
-    // --------------------------------------------------------
-    // INTERRUPTED
-    // --------------------------------------------------------
-
-    else if (status === "Interrupted") {
+    else if (
+        status === "Interrupted"
+    ) {
 
         statusMessage.textContent =
-            "Previous response cancelled. Listening for your new request...";
+            "Previous response stopped. Listening for your updated request...";
 
-        statusDot.classList.add("interrupted");
+        statusDot.classList.add(
+            "interrupted"
+        );
     }
 
 
-    // --------------------------------------------------------
-    // ERROR
-    // --------------------------------------------------------
-
-    else if (status === "Error") {
+    else if (
+        status === "Error"
+    ) {
 
         statusMessage.textContent =
             "Something went wrong. Please try again.";
 
-        statusDot.classList.add("error");
+        statusDot.classList.add(
+            "error"
+        );
     }
 }
 
 
 // ============================================================
-// UPDATE FARMER QUESTION
+// FARMER QUESTION
 // ============================================================
 
-function updateFarmerQuestion(question) {
+function updateFarmerQuestion(
+    question
+) {
 
     const element =
         document.getElementById(
@@ -923,10 +1125,12 @@ function updateFarmerQuestion(question) {
 
 
 // ============================================================
-// UPDATE VELAN RESPONSE
+// VELAN RESPONSE
 // ============================================================
 
-function updateVelanResponse(response) {
+function updateVelanResponse(
+    response
+) {
 
     const element =
         document.getElementById(
@@ -937,6 +1141,19 @@ function updateVelanResponse(response) {
     if (element) {
 
         element.textContent =
+            response;
+    }
+
+
+    const recommendation =
+        document.getElementById(
+            "recommendationText"
+        );
+
+
+    if (recommendation) {
+
+        recommendation.textContent =
             response;
     }
 }

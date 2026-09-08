@@ -1,25 +1,39 @@
 {
   "scenarios": {
-    "irrigation": {
+    "dry": {
+      "name": "Dry Soil",
+      "description": "Hot and dry field conditions",
       "temperature": "38°C",
       "soilMoisture": "Low",
+      "rainChance": "10%",
       "motorStatus": "OFF",
       "weather": "Sunny",
-      "recommendation": "Soil moisture is low. Irrigation is recommended."
+      "crop": "Paddy",
+      "recommendation": "Soil moisture is low and rain is unlikely. Irrigation is recommended today."
     },
+
     "rain": {
-      "temperature": "29°C",
+      "name": "Rain Expected",
+      "description": "Rain is likely in the coming hours",
+      "temperature": "30°C",
       "soilMoisture": "Medium",
+      "rainChance": "80%",
       "motorStatus": "OFF",
       "weather": "Rain Expected",
-      "recommendation": "Rain is expected. Avoid unnecessary irrigation today."
+      "crop": "Paddy",
+      "recommendation": "Rain is expected soon. Avoid unnecessary irrigation and monitor the field."
     },
-    "fertilizer": {
-      "temperature": "31°C",
+
+    "wet": {
+      "name": "Soil Already Wet",
+      "description": "Field has sufficient moisture",
+      "temperature": "29°C",
       "soilMoisture": "High",
+      "rainChance": "40%",
       "motorStatus": "OFF",
       "weather": "Cloudy",
-      "recommendation": "Soil moisture is sufficient. Avoid applying fertilizer immediately."
+      "crop": "Paddy",
+      "recommendation": "Soil moisture is already sufficient. Irrigation is not needed right now."
     }
   }
 }
